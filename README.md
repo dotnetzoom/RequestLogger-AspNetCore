@@ -48,7 +48,7 @@ public class HomeController : Controller
     }
 ```
 
-Check out [`Program.cs`]() and [`Startup.cs`]() to see how to Configuration.
+Check out [`Program.cs`](https://github.com/dotnetzoom/RequestLogger-AspNetCore/blob/master/RequestLogger/Program.cs) and [`Startup.cs`](https://github.com/dotnetzoom/RequestLogger-AspNetCore/blob/master/RequestLogger/Startup.cs) to see how to Configuration.
 
 This uses [Serilog](https://github.com/serilog/serilog) and [Serilog.AspNetCore](https://github.com/serilog/serilog-aspnetcore) for logging and [MSSqlServer](https://github.com/serilog/serilog-sinks-mssqlserver) sink but you can use any other [Sinks](https://github.com/serilog/serilog/wiki/Provided-Sinks).
 
