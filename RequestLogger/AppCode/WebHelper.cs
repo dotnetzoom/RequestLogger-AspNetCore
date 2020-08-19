@@ -113,7 +113,7 @@ namespace RequestLogger.AppCode
                     //connecting to a web server through an HTTP proxy or load balancer
                     //https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For
                     //https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Forwarded
-                    clientIp ??= headers["X-FORWARDED-FOR"].FirstOrDefault();
+                    clientIp ??= headers["X-Forwarded-For"].FirstOrDefault();
                 }
 
                 //if this header not exists try get connection remote IP address
