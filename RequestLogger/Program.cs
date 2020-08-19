@@ -7,6 +7,9 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Filters;
 using Serilog.Sinks.MSSqlServer;
+using Microsoft.Extensions.Primitives;
+using System.Linq;
+using Serilog.Sinks.MSSqlServer.Sinks.MSSqlServer.Options;
 
 namespace RequestLogger
 {
@@ -60,10 +63,9 @@ namespace RequestLogger
                                 .Filter.ByExcluding(Matching.WithProperty(nameof(LogRequestAttribute)))
                                 .WriteTo.MSSqlServer(
                                     connectionString: "Data Source=.;Initial Catalog=SerilogDb;Integrated Security=true",
-                                    tableName: "Logs",
+                                    sinkOptions: new SinkOptions { AutoCreateSqlTable = true, TableName = "Logs" },
                                     restrictedToMinimumLevel: LogEventLevel.Warning,
-                                    columnOptions: options,
-                                    autoCreateSqlTable: true);
+                                    columnOptions: options);
                         });
                });
     }

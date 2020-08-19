@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using System;
 using System.Linq;
@@ -32,23 +31,6 @@ namespace RequestLogger.AppCode
     /// </summary>
     public partial class WebHelper : IWebHelper
     {
-        /// <summary>
-        /// Gets the name of HTTP_X_FORWARDED_PROTO header
-        /// </summary>
-        public static string HttpXForwardedProtoHeader => "X-Forwarded-Proto";
-
-        /// <summary>
-        /// Gets the name of X-FORWARDED-FOR header
-        /// </summary>
-        public static string XForwardedForHeader => "X-FORWARDED-FOR";
-
-        /// <summary>
-        /// Gets or sets custom forwarded HTTP header (e.g. CF-Connecting-IP, X-FORWARDED-PROTO, etc)
-        /// Use the setting below if your hosting doesn't use "X-FORWARDED-FOR" header to determine IP address.
-        /// In some cases server use other HTTP header. You can specify a custom HTTP header here. For example, CF-Connecting-IP, X-FORWARDED-PROTO, etc
-        /// </summary>
-        public static string CustomForwardedHttpHeader => "";
-
         #region Fields 
 
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -114,30 +96,29 @@ namespace RequestLogger.AppCode
             if (!IsRequestAvailable())
                 return string.Empty;
 
-            var result = string.Empty;
+            var clientIp = string.Empty;
             try
             {
-                //first try to get IP address from the forwarded header
-                if (_httpContextAccessor.HttpContext.Request.Headers != null)
+                var headers = _httpContextAccessor.HttpContext.Request.Headers;
+
+                //first try to get IP address from the headers
+                if (headers != null)
                 {
+                    //if you are using CloudFlare try to CF-Connecting-IP or True-Client-IP (Enterprise plan only)
+                    //https://support.cloudflare.com/hc/en-us/articles/200170986-How-does-Cloudflare-handle-HTTP-Request-headers-
+                    clientIp = headers["CF-Connecting-IP"].FirstOrDefault() ?? headers["True-Client-IP"].FirstOrDefault();
+
+
                     //the X-Forwarded-For (XFF) HTTP header field is a de facto standard for identifying the originating IP address of a client
                     //connecting to a web server through an HTTP proxy or load balancer
-                    var forwardedHttpHeaderKey = XForwardedForHeader;
-                    if (!string.IsNullOrEmpty(CustomForwardedHttpHeader))
-                    {
-                        //but in some cases server use other HTTP header
-                        //in these cases an administrator can specify a custom Forwarded HTTP header (e.g. CF-Connecting-IP, X-FORWARDED-PROTO, etc)
-                        forwardedHttpHeaderKey = CustomForwardedHttpHeader;
-                    }
-
-                    var forwardedHeader = _httpContextAccessor.HttpContext.Request.Headers[forwardedHttpHeaderKey];
-                    if (!StringValues.IsNullOrEmpty(forwardedHeader))
-                        result = forwardedHeader.FirstOrDefault();
+                    //https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For
+                    //https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Forwarded
+                    clientIp ??= headers["X-FORWARDED-FOR"].FirstOrDefault();
                 }
 
                 //if this header not exists try get connection remote IP address
-                if (string.IsNullOrEmpty(result) && _httpContextAccessor.HttpContext.Connection.RemoteIpAddress != null)
-                    result = _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
+                if (string.IsNullOrEmpty(clientIp) && _httpContextAccessor.HttpContext.Connection.RemoteIpAddress != null)
+                    clientIp = _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
             }
             catch
             {
@@ -145,18 +126,18 @@ namespace RequestLogger.AppCode
             }
 
             //some of the validation
-            if (result != null && result.Equals(IPAddress.IPv6Loopback.ToString(), StringComparison.InvariantCultureIgnoreCase))
-                result = IPAddress.Loopback.ToString();
+            if (clientIp != null && clientIp.Equals(IPAddress.IPv6Loopback.ToString(), StringComparison.InvariantCultureIgnoreCase))
+                clientIp = IPAddress.Loopback.ToString();
 
             //"TryParse" doesn't support IPv4 with port number
-            if (IPAddress.TryParse(result ?? string.Empty, out var ip))
+            if (IPAddress.TryParse(clientIp ?? string.Empty, out var ip))
                 //IP address is valid 
-                result = ip.ToString();
-            else if (!string.IsNullOrEmpty(result))
+                clientIp = ip.ToString();
+            else if (!string.IsNullOrEmpty(clientIp))
                 //remove port
-                result = result.Split(':').FirstOrDefault();
+                clientIp = clientIp.Split(':').FirstOrDefault();
 
-            return result;
+            return clientIp;
         }
 
         /// <summary>

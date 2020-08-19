@@ -2,6 +2,8 @@
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.MSSqlServer;
+using Serilog.Sinks.MSSqlServer.Sinks.MSSqlServer.Options;
+using System;
 using System.Collections.ObjectModel;
 using System.Data;
 
@@ -17,12 +19,12 @@ namespace RequestLogger.AppCode
         /// <returns>LoggerConfiguration</returns>
         public static LoggerConfiguration LogActionRequestsWriteTo(this LoggerConfiguration loggerConfiguration, Action<LoggerConfiguration> configureLogger)
         {
-            configuration.WriteTo.Logger(config =>
+            loggerConfiguration.WriteTo.Logger(config =>
             {
                 config.Filter.FilterOnlyLogRequests();
                 configureLogger(config);
             });
-            return configuration;
+            return loggerConfiguration;
         }
 
         /// <summary>
@@ -57,10 +59,9 @@ namespace RequestLogger.AppCode
                     //.Enrich.FromLogContext()
                     .WriteTo.MSSqlServer(
                         connectionString: connectionString,
-                        tableName: tableName,
+                        sinkOptions: new SinkOptions { AutoCreateSqlTable = true, TableName = "Logs" },
                         restrictedToMinimumLevel: LogEventLevel.Information,
-                        columnOptions: options,
-                        autoCreateSqlTable: true);
+                        columnOptions: options);
             });
         }
     }
