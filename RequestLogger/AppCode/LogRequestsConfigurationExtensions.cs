@@ -1,5 +1,4 @@
-﻿using BookingSystem.WebServiceCache.Application.Utilities;
-using Serilog;
+﻿using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.MSSqlServer;
 using Serilog.Sinks.MSSqlServer.Sinks.MSSqlServer.Options;
@@ -59,7 +58,7 @@ namespace RequestLogger.AppCode
                     //.Enrich.FromLogContext()
                     .WriteTo.MSSqlServer(
                         connectionString: connectionString,
-                        sinkOptions: new SinkOptions { AutoCreateSqlTable = true, TableName = "Logs" },
+                        sinkOptions: new SinkOptions { AutoCreateSqlTable = true, TableName = tableName },
                         restrictedToMinimumLevel: LogEventLevel.Information,
                         columnOptions: options);
             });

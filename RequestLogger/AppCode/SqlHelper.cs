@@ -1,7 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using System;
 
-namespace BookingSystem.WebServiceCache.Application.Utilities
+namespace RequestLogger.AppCode
 {
     public static class SqlHelper
     {
